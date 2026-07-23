@@ -1,0 +1,13 @@
+node_modules/
+.env
+prisma_auth.db
+*.db
+zipFile.zip
+attached_assets/
+.cache/
+.local/
+.agents/
+.upm/
+.replit
+replit.nix
+replit.md
