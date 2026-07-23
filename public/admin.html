@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Admin Panel</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #5c73f2;
+    --accent-h: #4a60e0;
+    --red: #e05c5c;
+    --red-h: #c94a4a;
+    --green: #4caf7d;
+    --green-h: #3d9a69;
+    --yellow: #f0a732;
+    --text: #e2e5f0;
+    --muted: #7a80a0;
+    --radius: 8px;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── Login ── */
+  #login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  .login-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px 48px;
+    width: 360px;
+    text-align: center;
+  }
+  .login-card h1 { font-size: 22px; margin-bottom: 8px; }
+  .login-card p { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+  .login-card input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 14px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    outline: none;
+    transition: border-color .2s;
+  }
+  .login-card input:focus { border-color: var(--accent); }
+  .login-card button {
+    width: 100%;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius);
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 11px;
+    transition: background .2s;
+  }
+  .login-card button:hover { background: var(--accent-h); }
+  #login-error { color: var(--red); font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+  /* ── App shell ── */
+  #app { display: none; }
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    height: 56px;
+  }
+  header .brand { font-weight: 700; font-size: 16px; display: flex; align-items: center; gap: 10px; }
+  header .brand span { color: var(--accent); }
+  .logout-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 6px 14px;
+    transition: all .2s;
+  }
+  .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 20px 28px 0;
+  }
+  .tab {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius) var(--radius) 0 0;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 9px 18px;
+    transition: all .15s;
+  }
+  .tab.active { background: var(--surface); border-color: var(--border); border-bottom-color: var(--surface); color: var(--text); }
+  .tab:not(.active):hover { color: var(--text); }
+
+  /* ── Content ── */
+  .content {
+    padding: 0 28px 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 0 var(--radius) var(--radius) var(--radius);
+    margin: 0 28px 28px;
+  }
+  .pane { display: none; padding-top: 24px; }
+  .pane.active { display: block; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .toolbar input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    padding: 8px 12px;
+    flex: 1;
+    min-width: 180px;
+    max-width: 280px;
+    transition: border-color .2s;
+  }
+  .toolbar input:focus { border-color: var(--accent); }
+  .toolbar select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  .btn {
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    transition: background .2s;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-h); }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { background: var(--red-h); }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-success:hover { background: var(--green-h); }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .btn-ghost:hover { border-color: var(--text); color: var(--text); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--surface2);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .5px;
+    padding: 10px 14px;
+    text-align: left;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  td { padding: 11px 14px; vertical-align: middle; }
+  .mono { font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 12px; }
+
+  /* ── Badges ── */
+  .badge {
+    border-radius: 4px;
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+  }
+  .badge-banned { background: rgba(224,92,92,.2); color: var(--red); }
+  .badge-active { background: rgba(76,175,125,.15); color: var(--green); }
+  .badge-locked { background: rgba(240,167,50,.15); color: var(--yellow); }
+
+  /* ── Stats row ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+  }
+  .stat-card .val { font-size: 28px; font-weight: 700; line-height: 1; }
+  .stat-card .lbl { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .stat-card.red .val { color: var(--red); }
+  .stat-card.green .val { color: var(--green); }
+  .stat-card.yellow .val { color: var(--yellow); }
+
+  /* ── Ban form ── */
+  .ban-form {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 22px;
+  }
+  .ban-form h3 { font-size: 14px; margin-bottom: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .form-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .form-row input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    padding: 9px 12px;
+    flex: 1;
+    min-width: 160px;
+    transition: border-color .2s;
+  }
+  .form-row input:focus { border-color: var(--accent); }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    font-size: 13px;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(8px);
+    transition: all .25s;
+    z-index: 999;
+    max-width: 320px;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.ok { border-left: 3px solid var(--green); }
+  #toast.err { border-left: 3px solid var(--red); }
+
+  /* ── Empty state ── */
+  .empty { color: var(--muted); font-size: 13px; padding: 32px; text-align: center; }
+
+  /* ── Search highlight ── */
+  .hl { background: rgba(92,115,242,.3); border-radius: 2px; padding: 0 2px; }
+
+  /* ── Role badges ── */
+  .role-user     { background: rgba(122,128,160,.18); color: var(--muted); }
+  .role-media    { background: rgba(56,189,248,.15);  color: #38bdf8; }
+  .role-admin    { background: rgba(251,146,60,.18);  color: #fb923c; }
+  .role-owner    { background: rgba(251,191,36,.2);   color: #fbbf24; }
+
+  /* ── Role select in table ── */
+  .role-select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-size: 12px;
+    padding: 5px 8px;
+    cursor: pointer;
+    outline: none;
+  }
+  .role-select:focus { border-color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <h1>&#x1F510; Admin Panel</h1>
+    <p>Enter your admin key to continue</p>
+    <input type="password" id="key-input" placeholder="Admin key" autocomplete="off" />
+    <button onclick="doLogin()">Sign in</button>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="brand">&#x2699;&#xFE0F; <span>prisma</span>-auth &nbsp;Admin</div>
+    <button class="logout-btn" onclick="logout()">Sign out</button>
+  </header>
+
+  <div style="padding: 20px 28px 0;">
+    <div class="stats" id="stats-row"></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('users', this)">Users</button>
+    <button class="tab" onclick="switchTab('bans', this)">HWID Bans</button>
+    <button class="tab" onclick="switchTab('roles', this)">Roles</button>
+  </div>
+
+  <div class="content">
+
+    <!-- USERS PANE -->
+    <div class="pane active" id="pane-users">
+      <div class="toolbar">
+        <input type="text" id="user-search" placeholder="Search username / HWID..." oninput="renderUsers()" />
+        <select id="user-filter" onchange="renderUsers()">
+          <option value="all">All users</option>
+          <option value="active">Active</option>
+          <option value="banned">Banned</option>
+          <option value="locked">Locked</option>
+        </select>
+        <button class="btn btn-primary" onclick="loadUsers()">&#x21BB; Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>HWID</th>
+              <th>Registered</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="users-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ROLES PANE -->
+    <div class="pane" id="pane-roles">
+      <div class="toolbar">
+        <input type="text" id="role-search" placeholder="Search username / HWID..." oninput="renderRoles()" />
+        <button class="btn btn-primary" onclick="loadRoles()">&#x21BB; Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Username</th>
+              <th>HWID</th>
+              <th>Current Role</th>
+              <th>Change To</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="roles-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BANS PANE -->
+    <div class="pane" id="pane-bans">
+      <div class="ban-form">
+        <h3>Ban by username</h3>
+        <div class="form-row">
+          <input type="text" id="ban-username" placeholder="Username" />
+          <input type="text" id="ban-username-reason" placeholder="Reason (optional)" />
+          <button class="btn btn-danger" onclick="banByUsername()">Ban user</button>
+        </div>
+      </div>
+      <div class="ban-form">
+        <h3>Ban by HWID</h3>
+        <div class="form-row">
+          <input type="text" id="ban-hwid" placeholder="HWID" class="mono" />
+          <input type="text" id="ban-hwid-reason" placeholder="Reason (optional)" />
+          <button class="btn btn-danger" onclick="banByHwid()">Ban HWID</button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-primary" onclick="loadBans()">&#x21BB; Refresh</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>HWID</th>
+              <th>Reason</th>
+              <th>Banned at</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="bans-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  'use strict';
+
+  let ADMIN_KEY = '';
+  let usersCache = [];
+  let bansCache = [];
+
+  // ── Security helpers ──
+  function escHtml(s) {
+    if (s == null) return '';
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function escRegex(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // ── Auth ──
+  document.getElementById('key-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doLogin();
+  });
+
+  async function doLogin() {
+    const key = document.getElementById('key-input').value.trim();
+    if (!key) return;
+    const r = await fetch('/admin/users', { headers: { 'x-admin-key': key } });
+    if (r.status === 403) {
+      document.getElementById('login-error').textContent = 'Invalid admin key.';
+      return;
+    }
+    ADMIN_KEY = key;
+    sessionStorage.setItem('ak', key);
+    document.getElementById('login-error').textContent = '';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadAll();
+  }
+
+  function logout() {
+    sessionStorage.removeItem('ak');
+    location.reload();
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    const saved = sessionStorage.getItem('ak');
+    if (saved) { document.getElementById('key-input').value = saved; doLogin(); }
+  });
+
+  // ── Tabs ──
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.pane').forEach(function(p) { p.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('pane-' + name).classList.add('active');
+    if (name === 'bans') loadBans();
+    if (name === 'roles') loadRoles();
+  }
+
+  // ── API ──
+  async function api(method, url, body) {
+    const opts = {
+      method: method,
+      headers: { 'x-admin-key': ADMIN_KEY, 'Content-Type': 'application/json' }
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const r = await fetch(url, opts);
+    return r.json();
+  }
+
+  // ── Load ──
+  function loadAll() { loadUsers(); }
+
+  let rolesCache = [];
+
+  async function loadRoles() {
+    const data = await api('GET', '/admin/users');
+    rolesCache = data.users || [];
+    renderRoles();
+  }
+
+  async function loadUsers() {
+    const data = await api('GET', '/admin/users');
+    usersCache = data.users || [];
+    renderUsers();
+    updateStats();
+  }
+
+  async function loadBans() {
+    const data = await api('GET', '/admin/bans');
+    bansCache = data.bans || [];
+    renderBans(bansCache);
+  }
+
+  // ── Stats ──
+  function updateStats() {
+    const total = usersCache.length;
+    const banned = usersCache.filter(function(u) { return u.banned; }).length;
+    const locked = usersCache.filter(function(u) {
+      return u.locked_until && new Date(u.locked_until) > new Date();
+    }).length;
+    const active = total - banned;
+    document.getElementById('stats-row').innerHTML =
+      '<div class="stat-card green"><div class="val">' + total + '</div><div class="lbl">Total users</div></div>' +
+      '<div class="stat-card green"><div class="val">' + active + '</div><div class="lbl">Active</div></div>' +
+      '<div class="stat-card red"><div class="val">' + banned + '</div><div class="lbl">Banned</div></div>' +
+      '<div class="stat-card yellow"><div class="val">' + locked + '</div><div class="lbl">Locked</div></div>';
+  }
+
+  // ── Render users ──
+  function renderUsers() {
+    const q = document.getElementById('user-search').value.toLowerCase();
+    const filter = document.getElementById('user-filter').value;
+    const now = new Date();
+
+    const rows = usersCache.filter(function(u) {
+      const matchQ = !q ||
+        u.username.toLowerCase().includes(q) ||
+        (u.hwid || '').toLowerCase().includes(q);
+      const isLocked = u.locked_until && new Date(u.locked_until) > now;
+      const matchF =
+        filter === 'banned' ? u.banned :
+        filter === 'active' ? !u.banned :
+        filter === 'locked' ? isLocked : true;
+      return matchQ && matchF;
+    });
+
+    const tbody = document.getElementById('users-tbody');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No users found</td></tr>';
+      return;
+    }
+
+    // Highlight: escape the value first, then highlight the escaped query inside it
+    function hl(raw) {
+      const safe = escHtml(raw || '');
+      if (!q || !safe) return safe || '&mdash;';
+      const safeQ = escRegex(escHtml(q));
+      return safe.replace(new RegExp('(' + safeQ + ')', 'gi'), '<mark class="hl">$1</mark>');
+    }
+
+    tbody.innerHTML = rows.map(function(u) {
+      const isLocked = u.locked_until && new Date(u.locked_until) > now;
+      const badge = u.banned
+        ? '<span class="badge badge-banned">Banned</span>'
+        : isLocked
+          ? '<span class="badge badge-locked">Locked</span>'
+          : '<span class="badge badge-active">Active</span>';
+
+      const date = u.created_at ? escHtml(u.created_at.replace('T', ' ').slice(0, 16)) : '&mdash;';
+
+      const actionBtn = u.banned
+        ? '<button class="btn btn-success btn-sm" onclick="unbanUser(' + u.id + ')">Unban</button>'
+        : '<button class="btn btn-danger btn-sm" onclick="banUser(' + u.id + ')">Ban</button>';
+
+      return '<tr>' +
+        '<td style="color:var(--muted)">#' + u.id + '</td>' +
+        '<td><strong>' + hl(u.username) + '</strong></td>' +
+        '<td class="mono" style="color:var(--muted);font-size:11px">' + (hl(u.hwid) || '&mdash;') + '</td>' +
+        '<td style="color:var(--muted);font-size:12px">' + date + '</td>' +
+        '<td>' + badge + '</td>' +
+        '<td>' + actionBtn +
+          ' <button class="btn btn-ghost btn-sm" style="margin-left:6px" onclick="deleteUser(' + u.id + ')">Delete</button>' +
+        '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  // ── Role helpers ──
+  var ROLES = ['USER', 'MEDIA', 'ADMIN', 'OWNER'];
+
+  function roleBadgeClass(role) {
+    var map = { USER: 'role-user', MEDIA: 'role-media', ADMIN: 'role-admin', OWNER: 'role-owner' };
+    return map[role] || 'role-user';
+  }
+
+  function roleSelectHtml(userId, currentRole) {
+    var opts = ROLES.map(function(r) {
+      return '<option value="' + r + '"' + (r === currentRole ? ' selected' : '') + '>' + r + '</option>';
+    }).join('');
+    return '<select class="role-select" id="role-sel-' + userId + '">' + opts + '</select>';
+  }
+
+  // ── Render roles ──
+  function renderRoles() {
+    var q = document.getElementById('role-search').value.toLowerCase();
+    var rows = rolesCache.filter(function(u) {
+      return !q || u.username.toLowerCase().includes(q) || (u.hwid || '').toLowerCase().includes(q);
+    });
+
+    var tbody = document.getElementById('roles-tbody');
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No users found</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(function(u) {
+      var role = u.role || 'USER';
+      var badgeCls = roleBadgeClass(role);
+      return '<tr>' +
+        '<td style="color:var(--muted)">#' + u.id + '</td>' +
+        '<td><strong>' + escHtml(u.username) + '</strong></td>' +
+        '<td class="mono" style="color:var(--muted);font-size:11px">' + (escHtml(u.hwid) || '&mdash;') + '</td>' +
+        '<td><span class="badge ' + badgeCls + '">' + escHtml(role) + '</span></td>' +
+        '<td>' + roleSelectHtml(u.id, role) + '</td>' +
+        '<td><button class="btn btn-primary btn-sm" onclick="saveRole(' + u.id + ')">Save</button></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  async function saveRole(id) {
+    var u = rolesCache.find(function(x) { return x.id === id; });
+    if (!u) return;
+    var sel = document.getElementById('role-sel-' + id);
+    var role = sel ? sel.value : null;
+    if (!role) return;
+    var r = await api('POST', '/admin/setRole', { username: u.username, role: role });
+    if (r.ok) {
+      toast('Role updated: ' + u.username + ' → ' + role, 'ok');
+      // update cache so badge refreshes immediately
+      u.role = role;
+      renderRoles();
+    } else {
+      toast(r.error || 'Error', 'err');
+    }
+  }
+
+  // ── Render bans ──
+  function renderBans(bans) {
+    const tbody = document.getElementById('bans-tbody');
+    if (!bans.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty">No HWID bans</td></tr>';
+      return;
+    }
+    tbody.innerHTML = bans.map(function(b) {
+      const date = b.created_at ? escHtml(b.created_at.replace('T', ' ').slice(0, 16)) : '&mdash;';
+      return '<tr>' +
+        '<td class="mono" style="font-size:12px">' + escHtml(b.hwid) + '</td>' +
+        '<td style="color:var(--muted)">' + (escHtml(b.reason) || '&mdash;') + '</td>' +
+        '<td style="color:var(--muted);font-size:12px">' + date + '</td>' +
+        '<td><button class="btn btn-success btn-sm" onclick="unbanHwid(' + b.id + ')">Unban</button></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  // ── Actions (IDs only in onclick — no string injection) ──
+  async function banUser(id) {
+    const u = usersCache.find(function(x) { return x.id === id; });
+    if (!u) return;
+    const reason = prompt('Reason for banning "' + u.username + '" (optional):');
+    if (reason === null) return;
+    const r = await api('POST', '/admin/ban/user', { username: u.username, reason: reason });
+    if (r.ok) { toast('Banned: ' + u.username, 'ok'); loadUsers(); }
+    else toast(r.error || 'Error', 'err');
+  }
+
+  async function unbanUser(id) {
+    const u = usersCache.find(function(x) { return x.id === id; });
+    if (!u) return;
+    const r = await api('POST', '/admin/unban/user', { username: u.username });
+    if (r.ok) { toast('Unbanned: ' + u.username, 'ok'); loadUsers(); }
+    else toast(r.error || 'Error', 'err');
+  }
+
+  async function deleteUser(id) {
+    const u = usersCache.find(function(x) { return x.id === id; });
+    const label = u ? u.username : '#' + id;
+    if (!confirm('Delete user "' + label + '"? This cannot be undone.')) return;
+    const r = await api('DELETE', '/admin/users/' + id);
+    if (r.ok) { toast('Deleted: ' + label, 'ok'); loadUsers(); }
+    else toast(r.error || 'Error', 'err');
+  }
+
+  async function banByUsername() {
+    const username = document.getElementById('ban-username').value.trim();
+    const reason = document.getElementById('ban-username-reason').value.trim();
+    if (!username) { toast('Enter a username', 'err'); return; }
+    const r = await api('POST', '/admin/ban/user', { username: username, reason: reason });
+    if (r.ok) {
+      toast('Banned: ' + username, 'ok');
+      document.getElementById('ban-username').value = '';
+      document.getElementById('ban-username-reason').value = '';
+      loadBans(); loadUsers();
+    } else toast(r.error || 'Error', 'err');
+  }
+
+  async function banByHwid() {
+    const hwid = document.getElementById('ban-hwid').value.trim();
+    const reason = document.getElementById('ban-hwid-reason').value.trim();
+    if (!hwid) { toast('Enter a HWID', 'err'); return; }
+    const r = await api('POST', '/admin/ban', { hwid: hwid, reason: reason });
+    if (r.ok) {
+      toast('HWID banned', 'ok');
+      document.getElementById('ban-hwid').value = '';
+      document.getElementById('ban-hwid-reason').value = '';
+      loadBans(); loadUsers();
+    } else toast(r.error || 'Error', 'err');
+  }
+
+  async function unbanHwid(id) {
+    const b = bansCache.find(function(x) { return x.id === id; });
+    if (!b) return;
+    const r = await api('POST', '/admin/unban', { hwid: b.hwid });
+    if (r.ok) { toast('Unbanned HWID', 'ok'); loadBans(); loadUsers(); }
+    else toast(r.error || 'Error', 'err');
+  }
+
+  // ── Toast ──
+  let toastTimer;
+  function toast(msg, type) {
+    const el = document.getElementById('toast');
+    el.textContent = (type === 'ok' ? '\u2713 ' : '\u2715 ') + msg;
+    el.className = 'show ' + type;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { el.className = ''; }, 3000);
+  }
+</script>
+</body>
+</html>
